@@ -1,6 +1,7 @@
 package com.example.urlshortner.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -13,6 +14,6 @@ public class UrlCreateRequestDTO {
     private String longUrl;
     @NotBlank(message = "Alias is required")
     private String customAlias;
-    @NotBlank(message = "Expiry date is required")
+    @NotNull(message = "Expiry date is required")
     private LocalDateTime expiryDate;
 }

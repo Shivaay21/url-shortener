@@ -4,6 +4,10 @@ import com.example.urlshortner.dto.request.UrlCreateRequestDTO;
 import com.example.urlshortner.dto.response.UrlCreateResponseDTO;
 import com.example.urlshortner.dto.response.UrlStatsResponseDTO;
 import com.example.urlshortner.entity.Url;
+import com.example.urlshortner.exception.AliasAlreadyExistsException;
+import com.example.urlshortner.exception.InvalidUrlException;
+import com.example.urlshortner.exception.UrlExpiredException;
+import com.example.urlshortner.exception.UrlNotFoundException;
 import com.example.urlshortner.mapper.UrlMapper;
 import com.example.urlshortner.repository.UrlRepository;
 import com.example.urlshortner.service.UrlService;
@@ -30,46 +34,56 @@ public class UrlServiceImpl implements UrlService{
     @Override
     public UrlCreateResponseDTO createShortUrl(UrlCreateRequestDTO requestDTO){
         if(!UrlValidator.isValid(requestDTO.getLongUrl())){
-            throw new RuntimeException("Invalid URL Format");
+            throw new InvalidUrlException("Invalid URL Format");
         }
-
-        Url url = urlMapper.toEntity(requestDTO);
-        Url savedUrl = urlRepository.save(url);
 
         String shortCode;
         if(requestDTO.getCustomAlias() != null && !requestDTO.getCustomAlias().isBlank()){
             shortCode = requestDTO.getCustomAlias();
+
+            if(urlRepository.existsByShortCode(shortCode)){
+                throw new AliasAlreadyExistsException("Alias already exists");
+            }
         }
         else{
-            shortCode = base62Encoder.encode(savedUrl.getId());
+            shortCode = base62Encoder.encode(System.currentTimeMillis());
+            while(urlRepository.existsByShortCode(shortCode)){
+                shortCode = base62Encoder.encode(System.currentTimeMillis());
+            }
         }
-        savedUrl.setShortCode(shortCode);
-        urlRepository.save(savedUrl);
+        Url url = urlMapper.toEntity(requestDTO);
+        url.setShortCode(shortCode);
+        Url savedUrl = urlRepository.save(url);
+
         return urlMapper.toCreateResponse(savedUrl);
     }
 
     @Override
     public UrlCreateResponseDTO resolveShortUrl(String shortCode){
         Url url = urlRepository.findByShortCode(shortCode)
-                .orElseThrow(() -> new RuntimeException("Url not found"));
+                .orElseThrow(() -> new UrlNotFoundException("Url not found"));
 
         if(!url.isActive()){
-            throw new RuntimeException("URL Deleted");
+            throw new UrlNotFoundException("URL Deleted");
         }
 
         if(url.getExpiryDate().isBefore(LocalDateTime.now())){
-            throw new RuntimeException("URL expired");
+            throw new UrlExpiredException("URL expired");
         }
         url.setClickCount(url.getClickCount() +1 );
+        urlRepository.save(url);
         return urlMapper.toCreateResponse(url);
     }
 
     @Override
     public UrlStatsResponseDTO getUrlStats(String shortCode){
         Url url = urlRepository.findByShortCode(shortCode)
-                .orElseThrow(() -> new RuntimeException("Url not found"));
+                .orElseThrow(() -> new UrlNotFoundException("Url not found"));
+        if(url.getExpiryDate().isBefore(LocalDateTime.now())){
+            throw new UrlExpiredException("URL Expired");
+        }
         if(!url.isActive()){
-            throw new RuntimeException("URL is deleted");
+            throw new UrlNotFoundException("URL deleted");
         }
         return urlMapper.toStatsResponse(url);
     }
@@ -77,7 +91,7 @@ public class UrlServiceImpl implements UrlService{
     @Override
     public void deleteShortUrl(String shortCode){
         Url url = urlRepository.findByShortCode(shortCode)
-                .orElseThrow(() -> new RuntimeException("Url not found"));
+                .orElseThrow(() -> new UrlNotFoundException("Url not found"));
         url.setActive(false);
         urlRepository.save(url);
     }
@@ -85,7 +99,7 @@ public class UrlServiceImpl implements UrlService{
     @Override
     public int incrementClickCount(String shortCode){
         Url url = urlRepository.findByShortCode(shortCode)
-                .orElseThrow(() -> new RuntimeException("Url not found"));
+                .orElseThrow(() -> new UrlNotFoundException("Url not found"));
         url.setClickCount(url.getClickCount() + 1);
         urlRepository.save(url);
         return url.getClickCount();

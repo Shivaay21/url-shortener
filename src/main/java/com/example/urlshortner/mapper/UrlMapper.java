@@ -15,7 +15,6 @@ public class UrlMapper {
         // convert dto → entity
         Url url = new Url();
         url.setLongUrl(dto.getLongUrl());
-        url.setCustomAlias(dto.getCustomAlias());
         url.setExpiryDate(dto.getExpiryDate());
         url.setClickCount(0);
         url.setCreatedAt(LocalDateTime.now());

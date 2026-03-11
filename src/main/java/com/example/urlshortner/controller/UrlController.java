@@ -3,7 +3,6 @@ package com.example.urlshortner.controller;
 import com.example.urlshortner.dto.request.UrlCreateRequestDTO;
 import com.example.urlshortner.dto.response.UrlCreateResponseDTO;
 import com.example.urlshortner.dto.response.UrlStatsResponseDTO;
-import com.example.urlshortner.entity.Url;
 import com.example.urlshortner.service.UrlService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -11,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/shorten")
+@RequestMapping("/api/url")
 public class UrlController {
     private final UrlService urlService;
 
@@ -30,7 +29,7 @@ public class UrlController {
         UrlCreateResponseDTO shortUrl = urlService.resolveShortUrl(shortCode);
         return ResponseEntity.ok(shortUrl);
     }
-    @GetMapping("/url/{shortCode}/stats")
+    @GetMapping("/{shortCode}/stats")
     public ResponseEntity<UrlStatsResponseDTO> getUrlStats(@PathVariable String shortCode){
         UrlStatsResponseDTO stats = urlService.getUrlStats(shortCode);
         return ResponseEntity.ok(stats);

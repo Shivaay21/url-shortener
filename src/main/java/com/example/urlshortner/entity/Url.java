@@ -16,8 +16,10 @@ public class Url {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String longUrl;
+
+    @Column(unique = true, nullable = false)
     private String shortCode;
-    private String customAlias;
+
     private LocalDateTime createdAt;
     private LocalDateTime expiryDate;
     private int clickCount;
