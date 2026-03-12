@@ -1,5 +1,6 @@
 package com.example.urlshortner.mapper;
 
+import com.example.urlshortner.config.AppConfig;
 import com.example.urlshortner.dto.request.UrlCreateRequestDTO;
 import com.example.urlshortner.dto.response.UrlCreateResponseDTO;
 import com.example.urlshortner.dto.response.UrlStatsResponseDTO;
@@ -10,6 +11,11 @@ import java.time.LocalDateTime;
 
 @Component
 public class UrlMapper {
+    private final AppConfig appConfig;
+
+    public UrlMapper(AppConfig appConfig){
+        this.appConfig = appConfig;
+    }
 
     public Url toEntity(UrlCreateRequestDTO dto) {
         // convert dto → entity
@@ -24,7 +30,7 @@ public class UrlMapper {
 
     public UrlCreateResponseDTO toCreateResponse(Url url) {
         // entity → response
-        String shortUrl = "http://localhost:8080/" + url.getShortCode();
+        String shortUrl = appConfig.getBaseUrl() + "/" + url.getShortCode();
         return new UrlCreateResponseDTO(
                 shortUrl,
                 url.getShortCode(),

@@ -37,7 +37,12 @@ public class UrlServiceImpl implements UrlService{
             throw new InvalidUrlException("Invalid URL Format");
         }
 
+        if(requestDTO.getExpiryDate()==null){
+            requestDTO.setExpiryDate(LocalDateTime.now().plusDays(7));
+        }
+
         String shortCode;
+
         if(requestDTO.getCustomAlias() != null && !requestDTO.getCustomAlias().isBlank()){
             shortCode = requestDTO.getCustomAlias();
 
@@ -97,11 +102,21 @@ public class UrlServiceImpl implements UrlService{
     }
 
     @Override
-    public int incrementClickCount(String shortCode){
+    public String getLongUrl(String shortCode){
         Url url = urlRepository.findByShortCode(shortCode)
-                .orElseThrow(() -> new UrlNotFoundException("Url not found"));
+                .orElseThrow(() -> new UrlNotFoundException("URL not found"));
+
+        if(!url.isActive()){
+            throw new UrlNotFoundException("URL Deleted");
+        }
+
+        if(url.getExpiryDate().isBefore(LocalDateTime.now())){
+            throw new UrlExpiredException("URL Expired");
+        }
+
         url.setClickCount(url.getClickCount() + 1);
         urlRepository.save(url);
-        return url.getClickCount();
+
+        return url.getLongUrl();
     }
 }

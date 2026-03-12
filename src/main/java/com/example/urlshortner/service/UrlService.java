@@ -9,5 +9,5 @@ public interface UrlService {
     UrlCreateResponseDTO resolveShortUrl(String shortCode);
     UrlStatsResponseDTO getUrlStats(String shortCode);
     void deleteShortUrl(String shortCode);
-    int incrementClickCount(String shortCode);
+    String getLongUrl(String shortCode);
 }
