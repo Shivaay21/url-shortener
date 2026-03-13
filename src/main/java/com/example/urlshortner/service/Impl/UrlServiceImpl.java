@@ -10,6 +10,7 @@ import com.example.urlshortner.exception.UrlExpiredException;
 import com.example.urlshortner.exception.UrlNotFoundException;
 import com.example.urlshortner.mapper.UrlMapper;
 import com.example.urlshortner.repository.UrlRepository;
+import com.example.urlshortner.service.RedisService;
 import com.example.urlshortner.service.UrlService;
 import com.example.urlshortner.util.Base62Encoder;
 import com.example.urlshortner.util.UrlValidator;
@@ -24,11 +25,14 @@ public class UrlServiceImpl implements UrlService{
     private final UrlRepository urlRepository;
     private final Base62Encoder base62Encoder;
     private final UrlMapper urlMapper;
+    private final RedisService redisService;
 
-    public UrlServiceImpl(UrlRepository urlRepository, Base62Encoder base62Encoder, UrlMapper urlMapper){
+    public UrlServiceImpl(UrlRepository urlRepository, Base62Encoder base62Encoder,
+                          UrlMapper urlMapper, RedisService redisService){
         this.urlRepository = urlRepository;
         this.base62Encoder = base62Encoder;
         this.urlMapper = urlMapper;
+        this.redisService = redisService;
     }
 
     @Override
@@ -99,10 +103,17 @@ public class UrlServiceImpl implements UrlService{
                 .orElseThrow(() -> new UrlNotFoundException("Url not found"));
         url.setActive(false);
         urlRepository.save(url);
+        redisService.deleteUrl(shortCode);
     }
 
     @Override
     public String getLongUrl(String shortCode){
+        String cachedUrl = (String) redisService.getUrl(shortCode);
+
+        if(cachedUrl != null){
+            return cachedUrl;
+        }
+
         Url url = urlRepository.findByShortCode(shortCode)
                 .orElseThrow(() -> new UrlNotFoundException("URL not found"));
 
@@ -116,6 +127,8 @@ public class UrlServiceImpl implements UrlService{
 
         url.setClickCount(url.getClickCount() + 1);
         urlRepository.save(url);
+
+        redisService.saveUrl(shortCode, url.getLongUrl());
 
         return url.getLongUrl();
     }
