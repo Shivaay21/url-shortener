@@ -15,10 +15,12 @@ import com.example.urlshortner.service.UrlService;
 import com.example.urlshortner.util.Base62Encoder;
 import com.example.urlshortner.util.UrlValidator;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
+@Slf4j
 @Service
 @Transactional
 public class UrlServiceImpl implements UrlService{
@@ -37,7 +39,10 @@ public class UrlServiceImpl implements UrlService{
 
     @Override
     public UrlCreateResponseDTO createShortUrl(UrlCreateRequestDTO requestDTO){
+        log.info("Creating short URL for {}", requestDTO.getLongUrl());
+
         if(!UrlValidator.isValid(requestDTO.getLongUrl())){
+            log.warn("Invalid URL Format {}", requestDTO.getLongUrl());
             throw new InvalidUrlException("Invalid URL Format");
         }
 
@@ -49,8 +54,10 @@ public class UrlServiceImpl implements UrlService{
 
         if(requestDTO.getCustomAlias() != null && !requestDTO.getCustomAlias().isBlank()){
             shortCode = requestDTO.getCustomAlias();
+            log.info("Using custom alias {}", shortCode);
 
             if(urlRepository.existsByShortCode(shortCode)){
+                log.warn("Alias already exists {}", shortCode);
                 throw new AliasAlreadyExistsException("Alias already exists");
             }
         }
@@ -63,20 +70,28 @@ public class UrlServiceImpl implements UrlService{
         Url url = urlMapper.toEntity(requestDTO);
         url.setShortCode(shortCode);
         Url savedUrl = urlRepository.save(url);
+        log.info("Short URL created with code {}", savedUrl.getShortCode());
 
         return urlMapper.toCreateResponse(savedUrl);
     }
 
     @Override
     public UrlCreateResponseDTO resolveShortUrl(String shortCode){
+        log.info("Resolving short code {}", shortCode);
+
         Url url = urlRepository.findByShortCode(shortCode)
-                .orElseThrow(() -> new UrlNotFoundException("Url not found"));
+                .orElseThrow(() -> {
+                    log.warn("URL not found {}", shortCode);
+                    return new UrlNotFoundException("Url not found");
+                });
 
         if(!url.isActive()){
+            log.warn("URL is inactive {}", shortCode);
             throw new UrlNotFoundException("URL Deleted");
         }
 
         if(url.getExpiryDate().isBefore(LocalDateTime.now())){
+            log.warn("URL expired for shortCode {}", shortCode);
             throw new UrlExpiredException("URL expired");
         }
         url.setClickCount(url.getClickCount() +1 );
@@ -89,9 +104,11 @@ public class UrlServiceImpl implements UrlService{
         Url url = urlRepository.findByShortCode(shortCode)
                 .orElseThrow(() -> new UrlNotFoundException("Url not found"));
         if(url.getExpiryDate().isBefore(LocalDateTime.now())){
+            log.warn("URL expired for shortCode {}", shortCode);
             throw new UrlExpiredException("URL Expired");
         }
         if(!url.isActive()){
+            log.warn("URL is inactive {}", shortCode);
             throw new UrlNotFoundException("URL deleted");
         }
         return urlMapper.toStatsResponse(url);
@@ -104,6 +121,7 @@ public class UrlServiceImpl implements UrlService{
         url.setActive(false);
         urlRepository.save(url);
         redisService.deleteUrl(shortCode);
+        log.info("Deleted short URL {}", shortCode);
     }
 
     @Override
@@ -111,17 +129,22 @@ public class UrlServiceImpl implements UrlService{
         String cachedUrl = (String) redisService.getUrl(shortCode);
 
         if(cachedUrl != null){
+            log.info("Cache hit for shortCode {}", shortCode);
             return cachedUrl;
         }
+
+        log.info("Cache miss for shortCode {}, fetching from DB", shortCode);
 
         Url url = urlRepository.findByShortCode(shortCode)
                 .orElseThrow(() -> new UrlNotFoundException("URL not found"));
 
         if(!url.isActive()){
+            log.warn("URL is inactive {}", shortCode);
             throw new UrlNotFoundException("URL Deleted");
         }
 
         if(url.getExpiryDate().isBefore(LocalDateTime.now())){
+            log.warn("URL expired for shortCode {}", shortCode);
             throw new UrlExpiredException("URL Expired");
         }
 

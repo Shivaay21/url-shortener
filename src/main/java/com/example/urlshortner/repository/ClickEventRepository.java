@@ -1,0 +1,19 @@
+package com.example.urlshortner.repository;
+
+import com.example.urlshortner.entity.ClickEvent;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
+
+    List<ClickEvent> findByShortCode(String shortCode);
+
+    @Query("SELECT COUNT(c) FROM ClickEvent c WHERE c.shortCode = :shortCode")
+    int countTotalClicks(String shortCode);
+
+    @Query("SELECT COUNT(c) FROM ClickEvent c WHERE c.shortCode = :shortCode AND c.timestamp >= :fromTime")
+    int countClicksSince(String shortCode, LocalDateTime fromTime);
+}

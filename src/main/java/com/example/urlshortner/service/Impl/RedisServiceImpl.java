@@ -7,12 +7,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.apache.logging.log4j.util.Lazy.value;
-
 @Service
 @Transactional
 public class RedisServiceImpl implements RedisService {
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, String> redisTemplate;
 
     public RedisServiceImpl(RedisTemplate<String, String> redisTemplate){
         this.redisTemplate = redisTemplate;
@@ -27,7 +25,7 @@ public class RedisServiceImpl implements RedisService {
     @Override
     public String getUrl(String shortCode){
         String value = redisTemplate.opsForValue().get(buildKey(shortCode));
-        return value != null ? value.toString() : null;
+        return value != null ? (String) value : null;
     }
 
     @Override

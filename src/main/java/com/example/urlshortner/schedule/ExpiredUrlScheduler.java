@@ -23,15 +23,14 @@ public class ExpiredUrlScheduler {
 
     @Scheduled(cron = "0 0 2 * * *")
     public void deactivateExpiredUrls(){
-        List<Url> expiredUrls = urlRepository.findAll().stream()
-                .filter(url -> url.isActive() && url.getExpiryDate().isBefore(LocalDateTime.now()))
-                .toList();
+        List<Url> expiredUrls = urlRepository.findByExpiryDateBeforeAndIsActiveTrue(LocalDateTime.now());
 
         for(Url url : expiredUrls){
             url.setActive(false);
-            urlRepository.save(url);
             redisService.deleteUrl(url.getShortCode());
         }
+        urlRepository.saveAll(expiredUrls);
+
         log.info("Expired URLs deactivated: {}", expiredUrls.size());
     }
 }

@@ -13,7 +13,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UrlCreateRequestDTO {
-    @NotBlank(message = "Url is required")
+    @NotBlank(message = "Long Url cannot be blank")
+    @Pattern(regexp = "^(http|https)://.*$",
+            message = "Invalid URL format")
     private String longUrl;
 
     @Pattern(
