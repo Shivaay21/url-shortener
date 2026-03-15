@@ -18,6 +18,7 @@ import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Slf4j
@@ -52,27 +53,37 @@ public class UrlServiceImpl implements UrlService{
 
         String shortCode;
 
-        if(requestDTO.getCustomAlias() != null && !requestDTO.getCustomAlias().isBlank()){
+        if(requestDTO.getCustomAlias() != null && !requestDTO.getCustomAlias().isBlank()) {
             shortCode = requestDTO.getCustomAlias();
             log.info("Using custom alias {}", shortCode);
 
-            if(urlRepository.existsByShortCode(shortCode)){
+            if (urlRepository.existsByShortCode(shortCode)) {
                 log.warn("Alias already exists {}", shortCode);
                 throw new AliasAlreadyExistsException("Alias already exists");
             }
+
+            Url url = urlMapper.toEntity(requestDTO);
+            url.setShortCode(shortCode);
+
+            Url savedUrl = urlRepository.save(url);
+
+            return urlMapper.toCreateResponse(savedUrl);
         }
         else{
-            shortCode = base62Encoder.encode(System.currentTimeMillis());
-            while(urlRepository.existsByShortCode(shortCode)){
-                shortCode = base62Encoder.encode(System.currentTimeMillis());
-            }
-        }
-        Url url = urlMapper.toEntity(requestDTO);
-        url.setShortCode(shortCode);
-        Url savedUrl = urlRepository.save(url);
-        log.info("Short URL created with code {}", savedUrl.getShortCode());
 
-        return urlMapper.toCreateResponse(savedUrl);
+            Url url = urlMapper.toEntity(requestDTO);
+            url.setShortCode("temp");
+
+            Url savedUrl = urlRepository.save(url);
+
+            shortCode = base62Encoder.encode(savedUrl.getId());
+
+            savedUrl.setShortCode(shortCode);
+
+            urlRepository.save(savedUrl);
+
+            return urlMapper.toCreateResponse(savedUrl);
+        }
     }
 
     @Override
@@ -94,8 +105,7 @@ public class UrlServiceImpl implements UrlService{
             log.warn("URL expired for shortCode {}", shortCode);
             throw new UrlExpiredException("URL expired");
         }
-        url.setClickCount(url.getClickCount() +1 );
-        urlRepository.save(url);
+
         return urlMapper.toCreateResponse(url);
     }
 
@@ -151,8 +161,20 @@ public class UrlServiceImpl implements UrlService{
         url.setClickCount(url.getClickCount() + 1);
         urlRepository.save(url);
 
-        redisService.saveUrl(shortCode, url.getLongUrl());
+        long ttl = Duration.between(LocalDateTime.now(), url.getExpiryDate()).toSeconds();
+
+        if(ttl > 0){
+            redisService.saveUrl(shortCode, url.getLongUrl(), ttl);
+        }
 
         return url.getLongUrl();
+    }
+
+    @Override
+    public void incrementClickCount(String shortCode){
+        Url url = urlRepository.findByShortCode(shortCode)
+                .orElseThrow(() -> new UrlNotFoundException("URL not found"));
+        url.setClickCount(url.getClickCount()+1);
+        urlRepository.save(url);
     }
 }

@@ -11,8 +11,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, RateLimiterFilter rateLimiterFilter) throws Exception{
-        http.csrf(csrf -> csrf.disable()
-                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll()));
+        http.
+                csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .anyRequest().permitAll()
+                );
 
         http.addFilterBefore(rateLimiterFilter, UsernamePasswordAuthenticationFilter.class);
 

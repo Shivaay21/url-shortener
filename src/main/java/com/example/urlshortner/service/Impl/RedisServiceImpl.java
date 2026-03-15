@@ -29,8 +29,8 @@ public class RedisServiceImpl implements RedisService {
     }
 
     @Override
-    public void saveUrl(String shortCode, String longUrl){
-        redisTemplate.opsForValue().set(buildKey(shortCode),longUrl, 7, TimeUnit.DAYS);
+    public void saveUrl(String shortCode, String longUrl, long ttlSeconds){
+        redisTemplate.opsForValue().set(buildKey(shortCode),longUrl, ttlSeconds, TimeUnit.SECONDS);
     }
 
     @Override

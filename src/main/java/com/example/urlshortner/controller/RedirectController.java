@@ -36,6 +36,8 @@ public class RedirectController {
                 request.getHeader("User-Agent")
         );
 
+        urlService.incrementClickCount(shortCode);
+
         log.info("Redirecting {} to {}", shortCode, longUrl);
 
         return ResponseEntity
