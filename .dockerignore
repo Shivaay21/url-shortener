@@ -1,0 +1,7 @@
+target/
+out/*
+!out/artifacts/URLShortner_jar/URLShortner.jar
+*.iml
+*.idea
+*.log
+.git
