@@ -5,23 +5,33 @@ import com.example.urlshortner.dto.response.ApiResponse;
 import com.example.urlshortner.dto.response.UrlAnalyticsResponseDTO;
 import com.example.urlshortner.dto.response.UrlCreateResponseDTO;
 import com.example.urlshortner.dto.response.UrlStatsResponseDTO;
+import com.example.urlshortner.entity.Url;
+import com.example.urlshortner.mapper.UrlMapper;
 import com.example.urlshortner.service.ClickEventService;
 import com.example.urlshortner.service.UrlService;
+import com.example.urlshortner.util.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/urls")
 public class UrlController {
     private final UrlService urlService;
     private final ClickEventService clickEventService;
+    private final UrlMapper urlMapper;
 
 
-    public UrlController(UrlService urlService, ClickEventService clickEventService){
+    public UrlController(UrlService urlService, ClickEventService clickEventService, UrlMapper urlMapper){
         this.urlService = urlService;
         this.clickEventService = clickEventService;
+        this.urlMapper = urlMapper;
     }
 
     @PostMapping
@@ -61,5 +71,21 @@ public class UrlController {
 
         UrlAnalyticsResponseDTO analytics = new UrlAnalyticsResponseDTO(shortCode, totalClicks, clicksToday);
         return ResponseEntity.ok(new ApiResponse<>(true, analytics, "Analytics fetched successfully"));
+    }
+
+    @GetMapping("/my")
+    public ResponseEntity<ApiResponse<Page<UrlCreateResponseDTO>>> getMyUrls(@RequestParam(defaultValue = "0")int page,
+                                                                            @RequestParam(defaultValue = "10")int size
+    ){
+        String email = SecurityUtil.getCurrentUserEmail();
+        Pageable pageable = PageRequest.of(page,size);
+
+        Page<Url> urlPage = urlService.getUrlsByUserEmail(email,pageable);
+        Page<UrlCreateResponseDTO> response =
+                urlPage.map(urlMapper::toCreateResponse);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, response, "Url fetched successfully")
+        );
     }
 }

@@ -30,13 +30,13 @@ public class RedirectController {
         log.info("Redirect request received for {}", shortCode);
         String  longUrl = urlService.getLongUrl(shortCode);
 
+        urlService.incrementClickCount(shortCode);
+
         clickEventService.recordClick(
                 shortCode,
                 request.getRemoteAddr(),
                 request.getHeader("User-Agent")
         );
-
-        urlService.incrementClickCount(shortCode);
 
         log.info("Redirecting {} to {}", shortCode, longUrl);
 
@@ -45,5 +45,6 @@ public class RedirectController {
                 .location(URI.create(longUrl))
                 .build();
     }
+
 
 }

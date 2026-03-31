@@ -4,6 +4,7 @@ import com.example.urlshortner.entity.ClickEvent;
 import com.example.urlshortner.repository.ClickEventRepository;
 import com.example.urlshortner.service.ClickEventService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -19,6 +20,7 @@ public class ClickEventServiceImpl implements ClickEventService{
     }
 
     @Override
+    @Async
     public void recordClick(String shortCode, String ipAddress, String userAgent){
 
         log.info("Recording clicks for {}", shortCode);
@@ -28,6 +30,7 @@ public class ClickEventServiceImpl implements ClickEventService{
         click.setIpAddress(ipAddress);
         click.setUserAgent(userAgent);
         click.setTimestamp(LocalDateTime.now());
+
         clickEventRepository.save(click);
     }
 

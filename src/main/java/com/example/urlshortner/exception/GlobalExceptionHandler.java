@@ -56,12 +56,48 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException ex){
+        log.error("Unauthorized access {}", ex);
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                ex.getMessage(),
+                HttpStatus.FORBIDDEN.value()
+        );
+        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFoundException ex){
+        log.error("User not found {}",ex.getMessage(),ex);
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                ex.getMessage(),
+                HttpStatus.NOT_FOUND.value()
+        );
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleEmailAlreadyExists(EmailAlreadyExistsException ex){
+        log.error("Email already exists {}",ex.getMessage());
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                ex.getMessage(),
+                HttpStatus.BAD_REQUEST.value()
+        );
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationError(MethodArgumentNotValidException ex){
         log.error("Validation Error {}", ex.getMessage(), ex);
         String message = ex.getBindingResult()
-                .getFieldError()
-                .getDefaultMessage();
+                .getFieldErrors()
+                .stream()
+                .findFirst()
+                .map(fieldError -> fieldError.getDefaultMessage())
+                .orElse("Validation error");
 
         ErrorResponse error = new ErrorResponse(
                 LocalDateTime.now(),

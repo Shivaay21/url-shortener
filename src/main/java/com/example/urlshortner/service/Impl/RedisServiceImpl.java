@@ -16,7 +16,7 @@ public class RedisServiceImpl implements RedisService {
         this.redisTemplate = redisTemplate;
     }
 
-    private static final String KEY_PREFIX = "url::";
+    private static final String KEY_PREFIX = "url:";
 
     private String buildKey(String shortCode){
         return KEY_PREFIX + shortCode;
@@ -25,7 +25,7 @@ public class RedisServiceImpl implements RedisService {
     @Override
     public String getUrl(String shortCode){
         String value = redisTemplate.opsForValue().get(buildKey(shortCode));
-        return value != null ? (String) value : null;
+        return value;
     }
 
     @Override

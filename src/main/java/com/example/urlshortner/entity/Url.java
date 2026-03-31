@@ -24,4 +24,8 @@ public class Url {
     private LocalDateTime expiryDate;
     private int clickCount;
     private boolean isActive;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 }

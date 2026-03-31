@@ -4,18 +4,21 @@ import com.example.urlshortner.dto.request.UrlCreateRequestDTO;
 import com.example.urlshortner.dto.response.UrlCreateResponseDTO;
 import com.example.urlshortner.dto.response.UrlStatsResponseDTO;
 import com.example.urlshortner.entity.Url;
-import com.example.urlshortner.exception.AliasAlreadyExistsException;
-import com.example.urlshortner.exception.InvalidUrlException;
-import com.example.urlshortner.exception.UrlExpiredException;
-import com.example.urlshortner.exception.UrlNotFoundException;
+import com.example.urlshortner.entity.User;
+import com.example.urlshortner.exception.*;
 import com.example.urlshortner.mapper.UrlMapper;
 import com.example.urlshortner.repository.UrlRepository;
+import com.example.urlshortner.repository.UserRepository;
 import com.example.urlshortner.service.RedisService;
 import com.example.urlshortner.service.UrlService;
 import com.example.urlshortner.util.Base62Encoder;
+import com.example.urlshortner.util.SecurityUtil;
 import com.example.urlshortner.util.UrlValidator;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -29,13 +32,15 @@ public class UrlServiceImpl implements UrlService{
     private final Base62Encoder base62Encoder;
     private final UrlMapper urlMapper;
     private final RedisService redisService;
+    private final UserRepository userRepository;
 
     public UrlServiceImpl(UrlRepository urlRepository, Base62Encoder base62Encoder,
-                          UrlMapper urlMapper, RedisService redisService){
+                          UrlMapper urlMapper, RedisService redisService, UserRepository userRepository){
         this.urlRepository = urlRepository;
         this.base62Encoder = base62Encoder;
         this.urlMapper = urlMapper;
         this.redisService = redisService;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -65,14 +70,36 @@ public class UrlServiceImpl implements UrlService{
             Url url = urlMapper.toEntity(requestDTO);
             url.setShortCode(shortCode);
 
-            Url savedUrl = urlRepository.save(url);
+            String email = SecurityUtil.getCurrentUserEmail();
 
-            return urlMapper.toCreateResponse(savedUrl);
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            url.setUser(user);
+
+            try {
+                Url savedUrl = urlRepository.save(url);
+                long ttl = Duration.between(LocalDateTime.now(), savedUrl.getExpiryDate()).toSeconds();
+                if(ttl > 0){
+                    redisService.saveUrl(shortCode, savedUrl.getLongUrl(), ttl);
+                }
+                return urlMapper.toCreateResponse(savedUrl);
+
+            }catch (DataIntegrityViolationException ex){
+                throw new AliasAlreadyExistsException("Alias already exists");
+            }
         }
         else{
 
             Url url = urlMapper.toEntity(requestDTO);
             url.setShortCode("temp");
+
+            String email = SecurityUtil.getCurrentUserEmail();
+
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            url.setUser(user);
 
             Url savedUrl = urlRepository.save(url);
 
@@ -82,6 +109,12 @@ public class UrlServiceImpl implements UrlService{
 
             urlRepository.save(savedUrl);
 
+            long ttl = Duration.between(LocalDateTime.now(), savedUrl.getExpiryDate()).toSeconds();
+
+            if(ttl > 0){
+                redisService.saveUrl(shortCode, savedUrl.getLongUrl(), ttl);
+            }
+
             return urlMapper.toCreateResponse(savedUrl);
         }
     }
@@ -89,77 +122,40 @@ public class UrlServiceImpl implements UrlService{
     @Override
     public UrlCreateResponseDTO resolveShortUrl(String shortCode){
         log.info("Resolving short code {}", shortCode);
-
-        Url url = urlRepository.findByShortCode(shortCode)
-                .orElseThrow(() -> {
-                    log.warn("URL not found {}", shortCode);
-                    return new UrlNotFoundException("Url not found");
-                });
-
-        if(!url.isActive()){
-            log.warn("URL is inactive {}", shortCode);
-            throw new UrlNotFoundException("URL Deleted");
-        }
-
-        if(url.getExpiryDate().isBefore(LocalDateTime.now())){
-            log.warn("URL expired for shortCode {}", shortCode);
-            throw new UrlExpiredException("URL expired");
-        }
+        Url url = validateOwnerUrl(shortCode);
 
         return urlMapper.toCreateResponse(url);
     }
 
     @Override
     public UrlStatsResponseDTO getUrlStats(String shortCode){
-        Url url = urlRepository.findByShortCode(shortCode)
-                .orElseThrow(() -> new UrlNotFoundException("Url not found"));
-        if(url.getExpiryDate().isBefore(LocalDateTime.now())){
-            log.warn("URL expired for shortCode {}", shortCode);
-            throw new UrlExpiredException("URL Expired");
-        }
-        if(!url.isActive()){
-            log.warn("URL is inactive {}", shortCode);
-            throw new UrlNotFoundException("URL deleted");
-        }
+        Url url = validateOwnerUrl(shortCode);
         return urlMapper.toStatsResponse(url);
     }
 
     @Override
     public void deleteShortUrl(String shortCode){
-        Url url = urlRepository.findByShortCode(shortCode)
-                .orElseThrow(() -> new UrlNotFoundException("Url not found"));
+        Url url = validateOwnerUrl(shortCode);
+
         url.setActive(false);
         urlRepository.save(url);
         redisService.deleteUrl(shortCode);
+
         log.info("Deleted short URL {}", shortCode);
     }
 
     @Override
     public String getLongUrl(String shortCode){
-        String cachedUrl = (String) redisService.getUrl(shortCode);
+        String cachedUrl = redisService.getUrl(shortCode);
 
         if(cachedUrl != null){
             log.info("Cache hit for shortCode {}", shortCode);
+            validatePublicUrl(shortCode);
             return cachedUrl;
-        }
+            }
 
         log.info("Cache miss for shortCode {}, fetching from DB", shortCode);
-
-        Url url = urlRepository.findByShortCode(shortCode)
-                .orElseThrow(() -> new UrlNotFoundException("URL not found"));
-
-        if(!url.isActive()){
-            log.warn("URL is inactive {}", shortCode);
-            throw new UrlNotFoundException("URL Deleted");
-        }
-
-        if(url.getExpiryDate().isBefore(LocalDateTime.now())){
-            log.warn("URL expired for shortCode {}", shortCode);
-            throw new UrlExpiredException("URL Expired");
-        }
-
-        url.setClickCount(url.getClickCount() + 1);
-        urlRepository.save(url);
+        Url url = validatePublicUrl(shortCode);
 
         long ttl = Duration.between(LocalDateTime.now(), url.getExpiryDate()).toSeconds();
 
@@ -172,9 +168,40 @@ public class UrlServiceImpl implements UrlService{
 
     @Override
     public void incrementClickCount(String shortCode){
+        urlRepository.incrementClickCount(shortCode);
+    }
+
+    private Url validatePublicUrl(String shortCode){
         Url url = urlRepository.findByShortCode(shortCode)
                 .orElseThrow(() -> new UrlNotFoundException("URL not found"));
-        url.setClickCount(url.getClickCount()+1);
-        urlRepository.save(url);
+
+        if(!url.isActive()){
+            throw new UrlNotFoundException("URL Deleted");
+        }
+
+        if(url.getExpiryDate().isBefore(LocalDateTime.now())){
+            throw new UrlExpiredException("URL Expired");
+        }
+
+        return url;
+    }
+
+    private Url validateOwnerUrl(String shortCode){
+        Url url = validatePublicUrl(shortCode);
+
+        String email = SecurityUtil.getCurrentUserEmail();
+
+        if(!url.getUser().getEmail().equals(email)){
+            throw new UnauthorizedException("You are not allowed to access this URL");
+        }
+        return url;
+    }
+
+    @Override
+    public Page<Url> getUrlsByUserEmail(String email, Pageable pageable){
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        return urlRepository.findAllByUser(user, pageable);
     }
 }

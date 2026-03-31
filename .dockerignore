@@ -1,4 +1,7 @@
-target
+target/
+!target/*.jar
+out/
+!out/artifacts/URLShortner_jar/URLShortner.jar
 .git
 .gitignore
 node_modules

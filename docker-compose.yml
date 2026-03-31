@@ -1,0 +1,44 @@
+services:
+  urlshortner-app:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/urlshortner?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: OOPsql@22
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+
+      APP_BASE_URL: http://localhost:8080
+      APP_JWT_SECRET: mysupersecretkeymysupersecretkey123
+      APP_JWT_EXPIRATION: 3600000
+
+    restart: always
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: OOPsql@22
+      MYSQL_DATABASE: urlshortner
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pOOPsql@22"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: always
+
+  redis:
+    image: redis:7
+    ports:
+      - "6380:6379"
+    restart: always
