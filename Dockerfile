@@ -16,10 +16,12 @@ WORKDIR /app
 # Copy the JAR from previous stage
 COPY --from=build /app/target/*.jar app.jar
 COPY wait-for-it.sh .
-RUN chmod +x wait-for-it.sh
+COPY start.sh .
+
+RUN chmod +x wait-for-it.sh start.sh
 
 # Expose port
 EXPOSE 8080
 
 # Run the app
-ENTRYPOINT ["./wait-for-it.sh", "mysql:3306", "--", "wait-for-it.sh", "redis:6379", "--", "java", "-jar", "app.jar"]
+ENTRYPOINT ["./start.sh"]
