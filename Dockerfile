@@ -16,7 +16,7 @@ WORKDIR /app
 # Copy the JAR from previous stage
 COPY --from=build /app/target/*.jar app.jar
 COPY wait-for-it.sh .
-RUN chmod +x start.sh
+RUN chmod +x wait-for-it.sh
 
 # Expose port
 EXPOSE 8080
