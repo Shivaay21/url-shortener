@@ -21,4 +21,4 @@ COPY wait-for-it.sh .
 EXPOSE 8080
 
 # Run the app
-ENTRYPOINT ["./wait-for-it.sh", "mysql:3306", "--", "./wait-for-it.sh", "redis:6379", "--", "java","-jar","app.jar"]
+ENTRYPOINT ["./wait-for-it.sh", "mysql:3306", "--", "wait-for-it.sh", "redis:6379", "--", "java", "-jar", "app.jar"]
