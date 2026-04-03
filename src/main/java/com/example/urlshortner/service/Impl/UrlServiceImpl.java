@@ -80,8 +80,12 @@ public class UrlServiceImpl implements UrlService{
             try {
                 Url savedUrl = urlRepository.save(url);
                 long ttl = Duration.between(LocalDateTime.now(), savedUrl.getExpiryDate()).toSeconds();
-                if(ttl > 0){
-                    redisService.saveUrl(shortCode, savedUrl.getLongUrl(), ttl);
+                try {
+                    if(ttl > 0){
+                        redisService.saveUrl(shortCode, savedUrl.getLongUrl(), ttl);
+                    }
+                } catch (Exception e) {
+                    log.warn("Redis unavailable, skipping cache");
                 }
                 return urlMapper.toCreateResponse(savedUrl);
 
@@ -168,8 +172,12 @@ public class UrlServiceImpl implements UrlService{
 
         long ttl = Duration.between(LocalDateTime.now(), url.getExpiryDate()).toSeconds();
 
-        if(ttl > 0){
-            redisService.saveUrl(shortCode, url.getLongUrl(), ttl);
+        try {
+            if(ttl > 0){
+                redisService.saveUrl(shortCode, url.getLongUrl(), ttl);
+            }
+        } catch (Exception e) {
+            log.warn("Redis unavailable, skipping cache");
         }
 
         return url.getLongUrl();
