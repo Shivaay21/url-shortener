@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import java.util.concurrent.TimeUnit;
 
 @Service
-@Transactional
 public class RedisServiceImpl implements RedisService {
     private final RedisTemplate<String, String> redisTemplate;
 
