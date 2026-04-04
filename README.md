@@ -34,7 +34,7 @@ Authorization: Bearer <your_token>
 
 Body:
 {
-  "originalUrl": "https://google.com"
+  "longUrl": "https://google.com"
 }
 
 ---
