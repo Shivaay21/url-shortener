@@ -147,8 +147,7 @@ GET    /api/urls/{shortCode}/analytics  → Get analytics
 ---
 
 ## 🚀 Future Improvements
-
-- 🔐 Role-based access control  
+  
 - 🌍 Custom domain support  
 - 📊 Advanced analytics dashboard  
 - ⚡ Distributed caching (Redis Cluster)  
@@ -168,3 +167,30 @@ Backend Developer (Java + Spring Boot)
 - Covers scalability, caching, and performance optimization  
 - Includes authentication, rate limiting, and async processing  
 - Built with production-level practices  
+
+## 📸 Screenshots
+
+### 🔐 Authentication (JWT)
+
+<img width="1103" height="860" alt="{C94C7808-628F-4C5F-812B-F9F8B92B3578}" src="https://github.com/user-attachments/assets/39bc4282-cfa8-49b2-9e45-acb9f916cc56" />
+
+
+---
+
+### 🔗 Create Short URL
+
+<img width="1105" height="864" alt="{36946BCE-8BCF-4BDD-AB2A-47279F2B51C2}" src="https://github.com/user-attachments/assets/eba5b9ab-2959-41ab-82c8-6cdb153d7e2e" />
+
+
+---
+
+### 🔁 Redirect Flow
+
+<img width="1109" height="621" alt="{F4F2408B-5543-4960-8222-44583C10EB65}" src="https://github.com/user-attachments/assets/ed173a3c-027d-4e86-81a5-2b893b96be0b" />
+
+
+---
+
+### 📊 Analytics
+
+<img width="1107" height="861" alt="{F47FECC5-0E8B-4C77-A0E5-D6635F09101E}" src="https://github.com/user-attachments/assets/429050a9-d708-4eaf-ad5d-52dc351a33f3" />
