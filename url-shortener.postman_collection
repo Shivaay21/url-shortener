@@ -1,0 +1,151 @@
+{
+  "info": {
+    "_postman_id": "c4badfcd-8b36-4ea2-8414-207696e967fa",
+    "name": "URLShortener",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "52314954",
+    "_collection_link": "https://go.postman.co/collection/52314954-c4badfcd-8b36-4ea2-8414-207696e967fa?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Register",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"email\": \"test@example.com\",\r\n    \"password\": \"123456\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://3.106.218.248:8080/auth/register",
+          "protocol": "http",
+          "host": [
+            "3",
+            "106",
+            "218",
+            "248"
+          ],
+          "port": "8080",
+          "path": [
+            "auth",
+            "register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"email\": \"test@example.com\",\r\n    \"password\": \"123456\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://3.106.218.248:8080/auth/login",
+          "protocol": "http",
+          "host": [
+            "3",
+            "106",
+            "218",
+            "248"
+          ],
+          "port": "8080",
+          "path": [
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Redirect",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0QGV4YW1wbGUuY29tIiwiaWF0IjoxNzc1MzI1NzcwLCJleHAiOjE3NzUzMjkzNzB9.Eu-UvQFVUIu3hhreHHoMUnNtvgYz1xbEPHnTHrO0xf4",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"longUrl\": \"https://www.instagram.com\",\r\n    \"customAlias\": \"insta\"\r\n}"
+        },
+        "url": {
+          "raw": "http://3.106.218.248:8080/api/urls/1",
+          "protocol": "http",
+          "host": [
+            "3",
+            "106",
+            "218",
+            "248"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "urls",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Analytics",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0QGV4YW1wbGUuY29tIiwiaWF0IjoxNzc1MzI3MTYxLCJleHAiOjE3NzUzMzA3NjF9.ASLZpo7-hSA54yPP2EWTGvttpoXdcZU62F-OhslGo0s",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://3.106.218.248:8080/api/urls/1/analytics",
+          "protocol": "http",
+          "host": [
+            "3",
+            "106",
+            "218",
+            "248"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "urls",
+            "1",
+            "analytics"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
