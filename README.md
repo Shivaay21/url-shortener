@@ -1,116 +1,135 @@
-# 🔗 URL Shortener Backend (Spring Boot + Redis)
+🚀 URL Shortener Backend (Spring Boot + Redis + JWT)
 
-A scalable URL Shortener backend application built using **Spring Boot**, designed to convert long URLs into short links with features like caching, analytics, rate limiting, and expiry handling.
+A production-ready scalable URL Shortener API built using Spring Boot that supports authentication, caching, analytics, and rate limiting.
 
----
+Designed with a focus on performance, scalability, and clean architecture.
 
-## 🚀 Features
 
-* 🔗 Generate short URLs using Base62 encoding
-* ⚡ Fast redirection using HTTP 302
-* 🧠 Redis caching for high performance
-* ⏳ URL expiry support
-* 📊 Click tracking and analytics
-* 🚫 Rate limiting using Bucket4j
-* 🗑️ Soft delete (inactive URLs)
-* 🔁 Scheduled cleanup for expired URLs
-* 📄 Swagger API documentation
+🌐 Live API
 
----
+👉 http://3.106.218.248:8080/
 
-## 🛠️ Tech Stack
+⚠️ Note: This is a backend-only project. Use Postman / Swagger to test APIs.
 
-* **Backend:** Java, Spring Boot
-* **Database:** PostgreSQL
-* **Cache:** Redis
-* **Build Tool:** Maven
-* **Containerization:** Docker
-* **API Docs:** Swagger (OpenAPI)
 
----
+⚡ Quick Test (2 Minutes)
+🔐 1. Login (Get JWT Token)
 
-## 📂 Project Structure
+POST /auth/login
 
-Controller → Service → Repository → Entity → DTO → Config → Util
+{
+  "email": "test@example.com",
+  "password": "123456"
+}
 
----
+👉 Copy the token from response
 
-## ⚙️ API Endpoints
-
-### Create Short URL
+🔗 2. Create Short URL
 
 POST /api/urls
 
-### Resolve Short URL
+Headers:
 
-GET /api/urls/{shortCode}
+Authorization: Bearer <your_token>
 
-### Redirect
+Body:
 
-GET /{shortCode}
+{
+  "originalUrl": "https://google.com"
+}
+🔁 3. Redirect
 
-### Get Stats
+Open in browser:
+
+http://3.106.218.248:8080/{shortCode}
+📊 4. Get Stats
 
 GET /api/urls/{shortCode}/stats
 
-### Get Analytics
+📈 5. Get Analytics
 
 GET /api/urls/{shortCode}/analytics
 
-### Delete URL
 
-DELETE /api/urls/{shortCode}
+🔑 Test Credentials
+{
+  "email": "test@example.com",
+  "password": "123456"
+}
 
----
 
-## ⚡ How It Works
+🧠 Key Highlights
+⚡ Improved response time using Redis caching
+🔐 JWT-based authentication (1-hour expiry)
+🚀 Scalable REST API design
+📊 Async analytics tracking
+🛡️ Rate limiting for abuse prevention
+🐳 Dockerized deployment
 
-1. User sends a long URL
-2. URL is stored in database
-3. Unique ID is generated
-4. ID is encoded using Base62
-5. Short URL is returned
 
-On redirect:
+🧱 Architecture
+Client → Controller → Service → Repository → Database
+                     ↓
+                   Redis (Cache)
 
-* Check Redis cache
-* If not found, fetch from DB
-* Return original URL with 302 redirect
+                   
+🚀 Features
+🔗 Short URL generation (Base62 encoding)
+🔐 User authentication & authorization (JWT)
+⚡ Redis caching for faster redirects
+⏳ URL expiry support
+📊 Click tracking & analytics
+🚫 Rate limiting
+🗑️ Soft delete support
+🔁 Scheduled cleanup jobs
 
----
 
-## 📊 Key Concepts Used
+🛠️ Tech Stack
+Backend: Java, Spring Boot
+Database: PostgreSQL
+Cache: Redis
+Security: JWT
+Containerization: Docker
+Build Tool: Maven
 
-* Caching with Redis
-* Rate Limiting (Token Bucket Algorithm)
-* Scheduler for background jobs
-* REST API design principles
-* Exception handling & validation
 
----
+⚙️ API Endpoints
+Method	Endpoint	Description
+POST	/auth/register	Register new user
+POST	/auth/login	Login & get JWT
+POST	/api/urls	Create short URL
+GET	/{shortCode}	Redirect
+GET	/api/urls/{shortCode}/stats	Stats
+GET	/api/urls/{shortCode}/analytics	Analytics
 
-## 🌐 Live Demo
 
-👉 https://url-shortener-9opq.onrender.com/
+⚡ How It Works
+User logs in and gets JWT token
+Sends URL to API
+Unique ID is generated
+Encoded using Base62
+Stored in DB + cached in Redis
+Short URL returned
 
----
 
-## 📁 GitHub Repository
+🔁 Redirect Flow
+Check Redis cache
+If miss → fetch from DB
+Return original URL with HTTP 302 redirect
 
-👉 https://github.com/Shivaay21/url-shortener
 
----
+📊 Performance Optimizations
+Redis caching to reduce DB load
+Indexed database queries
+Async processing for analytics
+Rate limiting for stability
 
-## 🧑‍💻 Author
+
+🚀 Future Improvements
+🌍 Custom domain support
+📊 Advanced analytics dashboard
+⚡ Redis cluster (distributed caching)
+🧑‍💻 Author
 
 Shivam Kumar
 Backend Developer (Java + Spring Boot)
-
----
-
-## 📌 Future Improvements
-
-* User authentication (JWT)
-* Custom domain support
-* Advanced analytics dashboard
-* Distributed caching (Redis Cluster)
