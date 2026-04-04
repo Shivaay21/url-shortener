@@ -113,7 +113,7 @@ GET    /api/urls/{shortCode}/analytics  → Get analytics
 
 You can directly import and test all APIs using this Postman collection:
 
-👉 https://github.com/Shivaay21/url-shortener/blob/main/postman/url-shortener.postman_collection.json
+👉 https://github.com/Shivaay21/url-shortener/blob/main/url-shortener.postman_collection
 
 
 ### 🚀 How to Use
