@@ -109,6 +109,21 @@ GET    /api/urls/{shortCode}/analytics  → Get analytics
 
 ---
 
+## 📬 Postman Collection
+
+You can directly import and test all APIs using this Postman collection:
+
+👉 https://github.com/Shivaay21/url-shortener/blob/main/postman/url-shortener.postman_collection.json
+
+
+### 🚀 How to Use
+
+1. Download the collection  
+2. Open Postman  
+3. Click Import  
+4. Select the JSON file  
+5. Start testing APIs instantly  
+
 ## ⚡ How It Works
 
 1. User authenticates and receives a JWT token  
@@ -119,6 +134,7 @@ GET    /api/urls/{shortCode}/analytics  → Get analytics
 6. Short URL is returned  
 
 ---
+
 
 ## 🔁 Redirect Flow
 
